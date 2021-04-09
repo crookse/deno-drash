@@ -1,3 +1,5 @@
+/// Member: Drash.Http.Request
+
 import {
   decoder,
   FormFile,
@@ -9,6 +11,20 @@ import {
 type Reader = Deno.Reader;
 import { Drash } from "../../mod.ts";
 
+/**
+ * Options to pass to the Request constructor.
+ *
+ * headers
+ *
+ *     (optional) Headers to set on the request.
+ *
+ * memory_allocation
+ *
+ *     multipart_form_data
+ *
+ *         The amount (in megabytes) of memory to allocate to reading multipart
+ *         form data.
+ */
 export interface IOptions {
   headers?: Headers;
   memory_allocation: {
@@ -16,15 +32,56 @@ export interface IOptions {
   };
 }
 
+/**
+ * The class that represents the HTTP request.
+ */
 export class Request extends ServerRequest {
+  /**
+   * A property to hold the request's headers.
+   */
+  public headers: Headers;
+
+  /**
+   * A property to hold the request's methods (e.g., GET, POST, PUT, etc.).
+   */
+  public method: string;
+
+  /**
+   * See Drash.Interfaces.ParsedRequestBody.
+   */
   public parsed_body: Drash.Interfaces.ParsedRequestBody = {
     content_type: "",
     data: undefined,
   };
+
+  /**
+   * A property to hold the request's URL.
+   */
+  public url: string;
+
+  /**
+   * A property to hold the request's path params and their values.
+   */
   public path_params: { [key: string]: string } = {};
-  public url_query_params: { [key: string]: string } = {};
+
+  /**
+   * A property to hold the request's URL query params and their values.
+   */
+  public url_query_params: { [key: string]: string };
+
+  /**
+   * A property to hold the request's URL path.
+   */
   public url_path: string;
+
+  /**
+   * A property to hold the resource this request targets.
+   */
   public resource: Drash.Http.Resource | null = null;
+
+  /**
+   * A property to hold the original ServerRequest object from Deno.
+   */
   protected original_request: ServerRequest;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -32,24 +89,23 @@ export class Request extends ServerRequest {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-     * Construct an object of this class.
-     *
-     * @param ServerRequest - originalRequest
-     *     The original Deno ServerRequest object that's used to help create this
-     *     Drash.Http.Request object. There are some data members that the
-     *     original request has that can't be attached to this object. Therefore,
-     *     we keep track of the original request if we ever want to access data
-     *     members from it. An example of a data member that we want to access is
-     *     the original request's body.
-     * @param IOptions - options to be used in the server
-     */
-  constructor(originalRequest: ServerRequest, options?: IOptions) {
+   * Construct an object of this class.
+   *
+   * @param originalRequest - The original Deno ServerRequest object that's used
+   * to help create this Drash.Http.Request object. There are some data members
+   * that the original request has that can't be attached to this object.
+   * Therefore, we keep track of the original request if we ever want to access
+   * data members from it. An example of a data member that we want to access is
+   * the original request's body.
+   * @param options - Options to be used in the server.
+   */
+  constructor(originalRequest: ServerRequest) {
     super();
     this.headers = originalRequest.headers;
     this.method = originalRequest.method;
     this.original_request = originalRequest;
     this.url = originalRequest.url;
-    this.url_path = this.getUrlPath(originalRequest);
+    this.url_path = this.getUrlPath();
     this.url_query_params = this.getUrlQueryParams();
   }
 
@@ -62,14 +118,15 @@ export class Request extends ServerRequest {
    *
    * @param type - It is either a string or an array of strings that contains
    * the Accept Headers.
-   * @returns Either true or the string of the correct header.
+   *
+   * @returns True or the string of the correct header.
    */
   public accepts(type: string | string[]): boolean | string {
     return new Drash.Services.HttpService().accepts(this, type);
   }
 
   /**
-   * Gets all the body params
+   * Gets all the body params.
    *
    * @return The parsed body as an object
    */
@@ -78,7 +135,7 @@ export class Request extends ServerRequest {
   }
 
   /**
-   * Gets all header params
+   * Gets all header params.
    *
    * @return Key value pairs for the header name and it's value
    */
@@ -93,30 +150,31 @@ export class Request extends ServerRequest {
   /**
    * Get all the path params.
    *
-   * @return A key-value pair object where the key is the param name and the
-   * value is the param value.
+   * @return Key value pairs of the path params and their values. Empty object
+   * if no path params.
    */
   public getAllPathParams(): { [key: string]: string } {
     return this.path_params;
   }
 
   /**
-   * Gets a record whose keys are the request's url query params specified by inputs
-   * and whose values are the corresponding values of the query params.
-   * 
-   * @returns Key value pairs of the query param and its value. Empty object if no query params
+   * Gets a record whose keys are the request's URL query params specified by
+   * inputs and whose values are the corresponding values of the query params.
+   *
+   * @returns Key value pairs of the query param and its value. Empty object if
+   * no query params.
    */
   public getAllUrlQueryParams(): { [key: string]: string } {
     return this.url_query_params;
   }
 
   /**
-   * Get the requested file from the body of a multipart/form-data request, by
+   * Get the requested file from the body of a multipart/form-data request, by.
    * it's name.
    *
    * @param input - The name of the file to get.
    *
-   * @return The file requested or `undefined` if not available.
+   * @return The file requested or undefined if not available.
    */
   public getBodyFile(input: string): FormFile | undefined {
     if (typeof this.parsed_body.data!.file === "function") {
@@ -135,7 +193,9 @@ export class Request extends ServerRequest {
   /**
    * Get the value of one of this request's body params by its input name.
    *
-   * @returns The corresponding parameter or null if not found
+   * @param input - The name of the body param to get.
+   *
+   * @returns The corresponding parameter or null if not found.
    */
   public getBodyParam(
     input: string,
@@ -159,29 +219,42 @@ export class Request extends ServerRequest {
   /**
    * Get a cookie value by the name that is sent in with the request.
    *
-   * @param cookie - The name of the cookie to retrieve
+   * @param cookie - The name of the cookie to get.
    *
-   * @returns The cookie value associated with the cookie name or `undefined` if
-   * a cookie with that name doesn't exist
+   * @returns The cookie value associated with the cookie name or undefined if a
+   * cookie with that name doesn't exist.
    */
   public getCookie(name: string): string {
     const cookies: { [key: string]: string } = getCookies(
       this.original_request,
     );
+
     return cookies[name];
   }
 
   /**
    * Get the value of one of this request's headers by its input name.
    *
+   * @param input - The name of the header param to get.
+   *
    * @returns The corresponding header or null if not found.
    */
   public getHeaderParam(input: string): string | null {
-    return this.headers.get(input);
+    if (this.headers) {
+      return this.headers.get(input);
+    }
+
+    if (this.original_request.headers) {
+      return this.original_request.headers.get(input);
+    }
+
+    return null;
   }
 
   /**
    * Get the value of one of this request's path params by its input name.
+   *
+   * @param input - The name of the path param to get.
    *
    * @returns The corresponding path parameter or null if not found.
    */
@@ -197,10 +270,10 @@ export class Request extends ServerRequest {
   /**
    * Get this request's URL path.
    *
-   * @returns The URL path.
+   * @returns The URL path (e.g., /some/url/path).
    */
-  public getUrlPath(serverRequest: ServerRequest): string {
-    let path = serverRequest.url;
+  public getUrlPath(): string {
+    let path = this.original_request.url;
 
     if (path == "/") {
       return path;
@@ -222,6 +295,8 @@ export class Request extends ServerRequest {
   /**
    * Get the value of one of this request's query params by its input name.
    *
+   * @param input - The name of the URL query param to get.
+   *
    * @returns The corresponding query parameter from url or null if not found.
    */
   public getUrlQueryParam(input: string): string | null {
@@ -236,10 +311,6 @@ export class Request extends ServerRequest {
    * Get the request's URL query params by parsing its URL query string.
    *
    * @return The URL query string in key-value pair format.
-   *
-   * ```ts
-   * {[key: string]: string}
-   * ```
    */
   private getUrlQueryParams(): { [key: string]: string } {
     let queryParams: { [key: string]: string } = {};
@@ -284,8 +355,7 @@ export class Request extends ServerRequest {
   /**
    * Does the specified request have a body?
    *
-   * @returns A boolean `Promise`. `true` if the request has a body, `false` if
-   * not.
+   * @returns True if the request has a body and false if not.
    */
   public async hasBody(): Promise<boolean> {
     let contentLength = this.headers.get("content-length");
@@ -304,7 +374,7 @@ export class Request extends ServerRequest {
   /**
    * Parse the specified request's body.
    *
-   * @param options - See IOptions.
+   * @param options - See IOptions under Drash.Http.Request.
    *
    * @returns The content type of the body, and based on this the body itself in
    * that format. If there is no body, it returns an empty properties
@@ -431,7 +501,7 @@ export class Request extends ServerRequest {
   /**
    * Parse this request's body as application/x-www-form-url-encoded.
    *
-   * @returns A `Promise` of an empty object if no body exists, else a key/value
+   * @returns A Promise of an empty object if no body exists, else a key/value
    * pair array (e.g., `returnValue['someKey']`).
    */
   public async parseBodyAsFormUrlEncoded(): Promise<
@@ -450,7 +520,7 @@ export class Request extends ServerRequest {
   /**
    * Parse this request's body as application/json.
    *
-   * @returns A `Promise` of a JSON object decoded from request body.
+   * @returns A Promise of a JSON object decoded from request body.
    */
   public async parseBodyAsJson(): Promise<{ [key: string]: unknown }> {
     const data = decoder.decode(
@@ -467,7 +537,7 @@ export class Request extends ServerRequest {
    * @param maxMemory - The maximum memory to allocate to this process in
    * megabytes.
    *
-   * @return A Promise<MultipartFormData>.
+   * @returns A Promise MultipartFormData object.
    */
   public async parseBodyAsMultipartFormData(
     body: Reader,
@@ -488,8 +558,8 @@ export class Request extends ServerRequest {
   }
 
   /**
-   * Respond the the client's request by using the original request's
-   * `respond()` method.
+   * Respond the the client's request by using the original request's respond()
+   * method.
    *
    * @param output - The data to respond with.
    */
@@ -500,9 +570,9 @@ export class Request extends ServerRequest {
   }
 
   /**
-   * Set headers on the request.
+   * Set headers on this request.
    *
-   * @param headers - Headers in the form of `{[key: string]: string}`.
+   * @param headers - Headers in the form of {[key: string]: string}.
    */
   public setHeaders(headers: { [key: string]: string }): void {
     if (headers) {

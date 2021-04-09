@@ -1,3 +1,5 @@
+/// Member: Drash.Http.Server
+
 import { Drash } from "../../mod.ts";
 import {
   ConsoleLogger,
@@ -26,6 +28,7 @@ interface IServices {
  */
 export class Server {
   static REGEX_URI_MATCHES = new RegExp(/(:[^(/]+|{[^0-9][^}]*})/, "g");
+
   static REGEX_URI_REPLACEMENT = "([^/]+)";
 
   /**
@@ -113,7 +116,7 @@ export class Server {
   /**
    * Construct an object of this class.
    *
-   * @param configs - The config of Drash Server
+   * @param configs - See Drash.Interfaces.ServerConfigs.
    */
   constructor(configs: Drash.Interfaces.ServerConfigs) {
     this.configs = this.buildConfigs(configs);
@@ -134,7 +137,8 @@ export class Server {
    *
    * @param serverRequest - The incoming request object.
    *
-   * @returns A Promise of ResponseOutput.
+   * @returns A Promise of ResponseOutput. See Drash.Interfaces.ResponseOutput
+   * for more information.
    */
   public async handleHttpRequest(
     serverRequest: ServerRequest,
@@ -178,7 +182,8 @@ export class Server {
    * @param resource - (optional) Pass in the resource that threw the error.
    * @param response - (optional) Pass in the response that threw the error.
    *
-   * @returns A Promise of ResponseOutput.
+   * @returns A Promise of ResponseOutput. See Drash.Interfaces.ResponseOutput
+   * for more information.
    */
   public async handleHttpRequestError(
     request: Drash.Http.Request,
@@ -246,7 +251,8 @@ export class Server {
    * @param request - The request object
    *
    * @returns The response as stringified JSON. This is only used for
-   * unit testing purposes.
+   * unit testing purposes. See Drash.Interfaces.ResponseOutput for more
+   * information.
    */
   public async handleHttpRequestForFavicon(
     request: Drash.Http.Request,
@@ -268,6 +274,15 @@ export class Server {
     return response.send();
   }
 
+  /**
+   * Handle the HTTP rqeuest for the resource.
+   *
+   * @param request - The request object.
+   * @param response - The response object.
+   *
+   * @returns See Drash.Interfaces.ResponseOutput for more information.
+
+   */
   public async handleHttpRequestForResource(
     request: Drash.Http.Request,
     response: Drash.Http.Response,
@@ -725,7 +740,7 @@ export class Server {
 
     // We have to build the request and then parse it's body after because
     // constructors cannot be async
-    const request = new Drash.Http.Request(serverRequest, options);
+    const request = new Drash.Http.Request(serverRequest);
     await request.parseBody();
 
     return request;

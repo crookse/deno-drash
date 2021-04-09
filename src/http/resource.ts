@@ -1,3 +1,5 @@
+/// Member: Drash.Http.Resource
+
 import type { Drash } from "../../mod.ts";
 
 /**
@@ -6,49 +8,44 @@ import type { Drash } from "../../mod.ts";
  */
 export class Resource implements Drash.Interfaces.Resource {
   /**
-     * A property to hold the middleware this resource uses.
-     */
+   * A property to hold the middleware this resource uses.
+   */
   public middleware: { after_request?: []; before_request?: [] } = {};
 
   /**
-     * A property to hold the name of this resource. This property is used by
-     * Drash.Http.Server to help it store resources in its resources property
-     * by name.
-     */
+   * A property to hold the name of this resource. This property is used by
+   * Drash.Http.Server to help it store resources in its resources property
+   * by name.
+   */
   public name: string = "";
 
   /**
-     * A property to hold the paths to access this resource.
-     *
-     * All derived resource classes MUST define this property as static
-     * (e.g., static paths = ["path"];)
-     */
+   * A property to hold the paths to access this resource.
+   *
+   * All derived resource classes MUST define this property as static. For
+   * example, static paths = ["/path"].
+   */
   public paths: string[] = [];
 
   /**
-     * A property to hold the expanded versions of the paths. An expanded version of a path looks like the following:
-     * ```ts
-     * {
-     *   og_path: "/:id",
-     *   regex_path: "^([^/]+)/?$",
-     *   params: ["id"],
-     * ```
-     */
+   * A property to hold the expanded versions of the paths. See
+   * Drash.Interfaces.ResourcePaths for more information.
+   */
   public paths_parsed: Drash.Interfaces.ResourcePaths[] = [];
 
   /**
-     * The request object.
-     */
+   * The request object that targeted this resource.
+   */
   protected request: Drash.Http.Request;
 
   /**
-     * The response object.
-     */
+   * The response object that this resource will use to respond to the request.
+   */
   protected response: Drash.Http.Response;
 
   /**
-     * The server object.
-     */
+   * The server object.
+   */
   protected server: Drash.Http.Server;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -58,11 +55,11 @@ export class Resource implements Drash.Interfaces.Resource {
   /**
    * Construct an object of this class.
    *
-   * @param request - The request object.
-   * @param response - The response object.
-   * @param server - The server object.
-   * @param paths - The paths the resource accepts
-   * @param middleware - Any middleware for the resource
+   * @param request - See this.request.
+   * @param response - See this.response.
+   * @param server - See this.server.
+   * @param paths - See this.paths.
+   * @param middleware - See this.middleware.
    */
   constructor(
     request: Drash.Http.Request,
